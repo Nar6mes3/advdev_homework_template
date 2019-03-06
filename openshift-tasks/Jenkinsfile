@@ -56,23 +56,18 @@ podTemplate(
           // Using Maven run the unit tests
           "Unit Test": {stage("Unit Tests") {
             // TBD: Execute Unit Tests
-            steps {
-              echo "Running Unit Tests"
+            echo "Running Unit Tests"
 
-              sh "${mvnCmd} surefire:test"
+            sh "${mvnCmd} surefire:test"
 
-              step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
-            }
+            step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
           }},
           // Using Maven to call SonarQube for Code Analysis
           "Code Analysis": {stage("Code Analysis") {
             // TBD: Execute Sonarqube Tests
-            steps {
-              echo "Running Code Analysis"
-              // TBD
-              sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000 -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
-
-            }
+            echo "Running Code Analysis"
+            // TBD
+            sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000 -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
           }}
         )
       }
