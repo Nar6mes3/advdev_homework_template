@@ -37,6 +37,9 @@ podTemplate(
       // Set the tag for the production image: version
       def prodTag = "${version}"
 
+      def devProject = "${env.GUID}-tasks-dev"
+      def prodProject = "${env.GUID}-tasks-prod"
+
       // Using Maven build the war file
       // Do not run tests in this step
       stage('Build war') {
@@ -49,7 +52,7 @@ podTemplate(
 
       // TBD: The next two stages should run in parallel
       stage("Run Unit tests & Code analysis in parallel") {
-        parallel {
+        parallel (
           // Using Maven run the unit tests
           stage('Unit Tests') {
             // TBD: Execute Unit Tests
@@ -60,7 +63,7 @@ podTemplate(
 
               step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
             }
-          }
+          },
           // Using Maven to call SonarQube for Code Analysis
           stage('Code Analysis') {
             // TBD: Execute Sonarqube Tests
@@ -71,14 +74,14 @@ podTemplate(
 
             }
           }
-        }
+        )
       }
       // Publish the built war file to Nexus
       stage('Publish to Nexus') {
         // TBD: Publish to Nexus
         steps {
           echo "Publish to Nexus"
-          sh "${mvnCmd} deploy -DskipTests=true"
+          sh "${mvnCmd} deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::http://nexus3.gpte-hw-cicd.svc.cluster.local:8081/repository/releases"
         }
       }
 
@@ -109,6 +112,7 @@ podTemplate(
   		      openshift.withCluster() {
   			      openshift.withProject("${devProject}") {
   			        openshift.set("image", "dc/tasks", "tasks=docker-registry.default.svc:5000/${devProject}/tasks:${devTag}")
+                openshift.set("env", "dc/tasks", "--overwrite VERSION='${devTag} (tasks-dev)'")
 
         			  // Update the Config Map which contains the users for the Tasks application
         			  // (just in case the properties files changed in the latest commit)
@@ -142,7 +146,7 @@ podTemplate(
           echo "Copy image to Nexus Docker Registry"
           script {
             // TBD: Copy image to Nexus container registry
-            sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:admin123 docker://docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag} docker://nexus3-registry.${prefix}-nexus.svc.cluster.local:5000/tasks:${devTag}"
+            sh "skopeo copy --src-tls-verify=false --dest-tls-verify=false --src-creds openshift:\$(oc whoami -t) --dest-creds admin:redhat docker://docker-registry.default.svc.cluster.local:5000/${devProject}/tasks:${devTag} docker://nexus3.gpte-hw-cicd.svc.cluster.local:8081/repository/tasks:${devTag}"
             // TBD: Tag the built image with the production tag.
             openshift.withCluster() {
               openshift.withProject("${prodProject}") {
@@ -180,6 +184,7 @@ podTemplate(
                 def dc = openshift.selector("dc/${destApp}").object()
                 dc.spec.template.spec.containers[0].image="docker-registry.default.svc:5000/${devProject}/tasks:${prodTag}"
                 openshift.apply(dc)
+                openshift.set("env", "dc/${destApp}", "--overwrite VERSION='${prodTag} (${destApp})'")
 
                 // Update Config Map in change config files changed in the source
                 openshift.selector("configmap", "${destApp}-config").delete()
