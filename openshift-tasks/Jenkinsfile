@@ -54,7 +54,7 @@ podTemplate(
       stage("Run Unit tests & Code analysis in parallel") {
         parallel (
           // Using Maven run the unit tests
-          stage('Unit Tests') {
+          "Unit Test": {stage("Unit Tests") {
             // TBD: Execute Unit Tests
             steps {
               echo "Running Unit Tests"
@@ -63,9 +63,9 @@ podTemplate(
 
               step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/TEST-*.xml'])
             }
-          },
+          }},
           // Using Maven to call SonarQube for Code Analysis
-          stage('Code Analysis') {
+          "Code Analysis": {stage("Code Analysis") {
             // TBD: Execute Sonarqube Tests
             steps {
               echo "Running Code Analysis"
@@ -73,7 +73,7 @@ podTemplate(
               sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.gpte-hw-cicd.svc.cluster.local:9000 -Dsonar.projectName=${JOB_BASE_NAME} -Dsonar.projectVersion=${devTag}"
 
             }
-          }
+          }}
         )
       }
       // Publish the built war file to Nexus
