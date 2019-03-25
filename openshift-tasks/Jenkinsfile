@@ -216,7 +216,7 @@ podTemplate(
               def prodTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
               // Check if the returned string contains "tasks-prod"
               prodCountTrys = 0
-              while (!prodTasksRoute.contains("tasks-prod")) {
+              while (!prodTasksRoute.contains("${destApp}")) {
                 echo "*** tasks-prod not valid yet. Waiting for retryial... [ ${prodCountTrys} ]"
                 echo "[DEBUG] Result from curl contains:"
                 echo "${prodTasksRoute}"
