@@ -126,6 +126,7 @@ podTemplate(
               def devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
               // Check if the returned string contains "tasks-dev"
               while (devTasksRoute.contains("tasks-dev")) {
+                echo "*** tasks-dev not valid yet. Waiting for retryial..."
                 sleep 5
                 devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
               }
