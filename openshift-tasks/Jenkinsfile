@@ -123,6 +123,13 @@ podTemplate(
                 rc = openshift.selector("rc", "tasks-${dc_version}").object()
                 echo "Current status of the replicas ${rc.status.readyReplicas} out of ${rc.spec.replicas}"
               }
+              def devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
+              // Check if the returned string contains "tasks-dev"
+              while (devTasksRoute.contains("tasks-dev")) {
+                sleep 5
+                devTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-dev.apps.${CLUSTER}").trim()
+              }
+              echo "*** tasks-dev validated successfully."
             }
           }
         }
@@ -187,6 +194,14 @@ podTemplate(
                 sleep 5
                 rc_prod = openshift.selector("rc", "${destApp}-${dc_version}").object()
               }
+              def prodTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
+              // Check if the returned string contains "tasks-dev"
+              while (prodTasksRoute.contains("tasks-prod")) {
+                echo "*** tasks-prod not valid yet. Waiting for retryial..."
+                sleep 5
+                prodTasksRoute = sh(returnStdout: true, script: "curl tasks-${GUID}-tasks-prod.apps.${CLUSTER}").trim()
+              }
+              echo "*** tasks-prod validated successfully."
             }
           }
         }
