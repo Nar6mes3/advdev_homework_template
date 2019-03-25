@@ -169,6 +169,8 @@ podTemplate(
           openshift.withCluster() {
             openshift.withProject("${prodProject}") {
               // TBD: Determine which application is active
+              debug = openshift.selector("route", "tasks").object()
+              echo "[DEBUG] Route tasks: ${debug}"
               activeApp = openshift.selector("route", "tasks").object().spec.to.name
               if (activeApp == "tasks-green") {
                 destApp = "tasks-blue"
